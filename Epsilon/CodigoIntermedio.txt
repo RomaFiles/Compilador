@@ -1,0 +1,42 @@
+Type  Values
+Num   A
+
+Type  Values
+Num   B
+
+Type  Values
+Num   C
+
+Type  Values
+Num   D
+
+Type  Values
+Num   E
+
+Type  Values
+Num   F
+
+Type  Values
+Num   G
+
+OP  v1  V2  R   
+        10    G
+
+OP  v1  V2  R   
+        5    A
+
+OP  v1  V2  R   
+        8    B
+
+OP  v1  V2  R   
+        T0    A
+
+Type  Values
+Num   H
+
+OP  v1  V2  R   
+        15    H
+
+OP  v1  V2  R   
+        T0    C
+

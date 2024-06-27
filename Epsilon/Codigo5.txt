@@ -1,0 +1,29 @@
+Inicio
+Num A;
+Num B;
+Num C;
+Num D;
+Num E;
+Num F;
+Num I;
+
+
+
+imprimir('Ingrese el primer valor numérico');
+leer(A);
+imprimir('Ingrese el segundo valor numérico');
+leer(B);
+
+C = A / B;
+D = A - B;
+
+para (I <11; I +1){
+
+imprimir('El resultado de la división es ' ~ C);
+imprimir('El resultado de la resta es ' ~ D);
+imprimir(I);
+}
+
+
+
+Fin

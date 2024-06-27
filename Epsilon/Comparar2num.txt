@@ -1,0 +1,27 @@
+Inicio 
+
+Num A;
+Num B;
+Num C;
+Num D;
+
+imprimir ('Ingresa el primer numero');
+leer (A);
+imprimir ('Ingresa el segundo numero');
+leer (B);
+
+si (A > B){
+C = A;
+D = B;
+}
+si (A == B){
+imprimir ('los numeros son iguales');
+}
+si (A < B){
+C = B;
+D = A;
+}
+imprimir ('El mayor es ' ~ C);
+imprimir ('El menor es ' ~ D);
+
+Fin

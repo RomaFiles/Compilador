@@ -1,0 +1,34 @@
+Inicio 
+
+Num Y;Bool Z = Falso;
+Cad F = 'hola';
+Cad X = yo;
+Y = 0;
+Num A;
+Num A;
+Num U;
+Num B;
+Num C;
+Num E;
+Num I;
+Num R;
+Num M = 10;
+Num D = 10;
+Num C1;
+U + F = 12;
+
+
+imprimir ('éíóúáñ');
+imprimir ('Ingresa un número');
+leer (R);
+imprimir ('Ingresa un digito');
+leer (B);
+imprimir ('Ingresa un digito');
+leer (C);
+si (A < B) {
+        imprimir ('hola');
+}
+
+Num U = M + D + F;
+
+Fin

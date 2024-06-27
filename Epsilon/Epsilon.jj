@@ -1,0 +1,1636 @@
+//Inicio del Main
+options {
+  STATIC = false;
+}
+PARSER_BEGIN(Epsilon)
+
+public class Epsilon{ 
+    
+    String A="\n------------Errores:\n";//Variable para almacenar los errores   
+    String[] TE = {"\nError L\u00e9xico. ", "\nError Sint\u00e1ctico. ", "\nError Sem\u00e1ntico. "};//Tipos de errores
+
+    //Inicio de Variables para Semántica**************************************************************
+    int ValorN;
+    Cache Objeto_Variable = new Cache();//Variable Fluctuante
+    String Type="", Valor=""; //Variables Cache para capturar el PAR
+    String lugar = "";//Posición Variable donde se puede originar una inconsistencia
+    java.util.ArrayList<ParOrd> ParOrdenado = new java.util.ArrayList<ParOrd>(); //Lista de IDs
+    //Fin de Variables para Semántica**************************************************************
+    //Inicio de Variables para Código Intermedio**************************************************************
+    String ruta = "C:/Epsilon/CodigoIntermedio.txt";
+    String ruta2 ="C:/Epsilon/CodInterm.txt";
+    CTDOA codigo_aritmetico = new CTDOA();
+    EscrituraCI CIsinOptim = new EscrituraCI(ruta2);
+    EscrituraCI ECI = new EscrituraCI(ruta);//Escritura de Código Intermedio
+    String CI = ""; //Almacén de Código Intermedio
+    String CISoptm= "";
+    String IGCI = ""; //IDENTIFICADOR en uso para la GENERACIÓN de CÓDIGO INTERMEDIO
+    int label = 0;//Etiquetas usadas en mientras
+    int label2=label;
+    boolean aplicaGCI = true;//Valida que la instrucción este correcta para generar el Código Intermedio
+    boolean vigilanteId = true;
+    //Fin de Variables para Código Intermedio**************************************************************-------
+    
+    //Inicio de Variables para Optimización**************************************************************---------
+    boolean T = false; //Debo cambiarlo. Se usa en Ingreso ID's
+    java.util.ArrayList<ParOrd> IDsinUso = new java.util.ArrayList<ParOrd>();//lista con las variables muertas
+    //Fin de Variables para Optimización**************************************************************-------
+
+    //Inicio varibales para Ensamblador**************************************************************-------------
+   String Call = "cmd /k start C:/Epsilon/Ensamble.bat";
+    W_CPlusPlus trans = new W_CPlusPlus("C:/Epsilon/Implementacion.cpp");
+    //Fin varibales para Ensamblador**************************************************************-------
+
+    public static void main(String[] args) throws ParseException{
+    
+        Epsilon compilador = new Epsilon(System.in);  
+        compilador.Principal();
+    } 
+}
+
+PARSER_END(Epsilon)
+/*
+* Fin de la Clase Principal
+* Inicio de Palabras Reservadas
+*/
+SKIP:
+{//("\u00e9")
+    "\t"    
+    |" "
+    |<SALTO: "\r\n">
+}
+TOKEN:
+{
+    <INICIO: "Inicio">
+    |<ROMPER: "romper">
+    |<LEER: "leer">
+    |<IMPRIMIR: "imprimir">
+    |<WHILE: "mientras">
+    |<FOR: "para">
+    |<V_ALF_NUM: ("\'")+((" ")|(["a"-"z"])|(["A"-"Z"])|(["0"-"9"])|(":")|("é")|("\u00e9")|("ó")|("á")|("ú")|("ñ")|("í")|("\u00fa")|("\u00ed")|("\u00e1")|("\u00f3")|("\u00f1")|"ú")+("\'")>
+    |<IDENTIFICADOR: ((["A"-"Z"])(["0"-"9"])*)+>
+    |<NUMERO: "Num">
+    |<V_NUM: ((["0"-"9"])+) | ((["0"-"9"])+(".")(["0"-"9"])+)>
+    |<STRING: "Cad">
+    |<BOOLEAN: "Bool">
+    |<VF: "Verdadero" | "Falso">
+    |<IF: "si">
+    |<FIN: "Fin">
+    |<SWITCH: "segun">
+    |<CASE: "caso">
+
+
+}
+TOKEN:
+{
+    <PI: "(">
+    |<PD: ")">
+    |<LI: "{">
+    |<LD: "}">
+    |<PC: ";"> 
+    |<ASOCIATIVO: ":">
+    |<IGUAL: "==">
+    |<ASIGNACION: "=">
+    |<COMA: ",">
+    |<OR: "|">
+    |<AND: "&">
+    |<NOT: "!">
+    |<DIFERENTE: "!=">
+    |<MAYORQ: ">">
+    |<MENORQ: "<">
+    |<RESIDUO: "%">
+    |<MODULO: "Mod">
+    |<MENOS: "-">
+    |<MAS: "+">
+    |<MULT: "*">
+    |<DIV: "/">
+    |<UNION: "~">
+    |<TER: ("@")+
+    |(".")+
+    |("=")+//
+    |("+")+//Si algo falla quitar los comentados
+    |("*")+//
+    |(";")+
+    |("ñ")+
+    |("\"")+
+    |("?")+ 
+    |("¿")+
+    |("$")+
+    |("#")+
+    |("^")+
+    |("&")+
+    |("-")+
+    |("_")+
+    |("/")+
+    |("[")+
+    |("]")+
+    |("|")+
+    |("!")+
+    |("|")+
+    |("&")+
+    |("!")+
+    |((["A"-"Z"])|(["a"-"z"]))+
+  //  |("\'"|(["A"-"Z"])|(["a"-"z"]))+
+    >
+}
+void Principal():{}{   
+
+    (<INICIO>{
+        trans.Write_to_CPlus("setlocale(LC_CTYPE,\"spanish\");\n");
+        trans.Write_to_CPlus("int numeroEntero;\n");
+        trans.Write_to_CPlus("string input; \n"); // /\"Hola\";\n");
+        trans.Write_to_CPlus("string s= \"f\";\n");
+        trans.Write_to_CPlus("int n;\n");
+     //   trans.Write_to_CPlus("system(\"Chcp 65001\");\n");
+    }
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba la palabra \"Inicio\"";
+    }
+    | /*EPSILON*/{
+        A+= TE[1] + posicion_token() + "No se ingres\u00f3 la palabra reservada \"Inicio\". Necesita ser ingresada";
+    })
+///////
+    (
+    <ROMPER>{
+        trans.Write_to_CPlus("break;\n");
+        ARD0();
+    }
+    | <NUMERO>{
+        Type = "Num";
+        trans.Write_to_CPlus("float ");
+        ARD1();
+    }
+    | <STRING>{
+        trans.Write_to_CPlus("string ");
+        Type = "Cad";
+        ARD2();
+    }
+    | <BOOLEAN>{
+        trans.Write_to_CPlus("bool ");
+        Type = "Bool";
+        ARD3();
+    }
+    | <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" "); */
+        trans.Write_to_CPlus(token.image);
+        Valor = token.image+"";
+        IGCI = token.image;
+                lugar = posicion_token();
+                ExistenciaIDsConRedir();            
+    }
+    | <IF>{
+        trans.Write_to_CPlus("if (");
+        ARD4();
+        trans.Write_to_CPlus("}\n");
+    }
+    | <WHILE>{
+        trans.Write_to_CPlus("while (true) {\n");
+        ARD5();
+        trans.Write_to_CPlus("}\n");
+    }
+    | <FOR>{
+        trans.Write_to_CPlus("for(");
+        ARD6();
+        trans.Write_to_CPlus("}\n");
+    }
+    | (<LEER>{
+       // trans.Write_to_CPlus("cin >> ");
+        ETA();
+    })
+    | <TER>{
+        ARD7();
+    }
+    |<SWITCH>{Segun();}
+       
+    | <IMPRIMIR>{
+        trans.Write_to_CPlus("cout << ");
+        IPA();
+    }
+    )*
+
+///////
+    (<FIN>{
+        trans.end_to_CPlus();
+    } 
+  /*  | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba la palabra \"Inicio\"";
+        
+    }*/
+    | /*EPSILON*/{
+        A+= TE[1] + posicion_token() + "No se ingres\u00f3 la palabra reservada \"Fin\". Necesita ser ingresada";
+    })
+    
+        {
+            if(!A.equals("\n------------Errores:\n"))   System.out.println(A);          
+            
+            System.out.println("\nCompilaci\u00f3n Finalizada.");
+
+            if(A.equals("\n------------Errores:\n")){                
+                try{
+                    System.out.println("Procesando ejecuci\u00f3n");
+                    Runtime.getRuntime().exec(Call);              
+                } catch (java.io.IOException ex) {
+                   System.out.println("Gracias");
+                    //Logger.getLogger(Ejecucion.class.getName()).log(Level.SEVERE, null, ex);
+                }    
+            }                
+        }
+}
+/*JAVACODE
+public String ql(String quitar){
+    if (quitar == null || quitar.length == 0){
+        return quitar;
+    }
+        return quitar.subString(1);
+}*/
+
+//----------------------INICIO DE MÉTODOS SOLO PARA ARRANCAR*******************************
+void ARD0():{}{//Romper
+    <PC>{
+        ECI.EscribirB("Romper goto Lable"+(label+1) + "\n");
+        CIsinOptim.EscribirB("Romper goto Lable"+(label2+1) + "\n");
+    }
+    |/*EPSILON*/{
+        A+= TE[1] + posicion_token() + "No se ingres\u00f3 un punto y coma. Se esparaba uno."; 
+    }
+}
+void ARD1():{}{//Numumeros
+    <IDENTIFICADOR> {
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */
+        Valor = token.image;
+        IGCI = token.image;  
+        trans.Write_to_CPlus(Valor+" ");
+        lugar = posicion_token();
+        validacionIDs();
+        Asignar();
+    }
+    |<TER>{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un Identificador.";
+        Asignar();
+    }
+    |/*EPSILON*/{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "No se ingres\u00f3 un identificador. Se esparaba un identificador."; 
+        Asignar();
+    }
+}
+void ARD2():{}{//Cadenas
+    <IDENTIFICADOR>{
+      /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image + " ");
+        Valor = token.image + "";
+        IGCI = token.image;
+        lugar = posicion_token();
+        validacionIDs();
+        AsignacionS();
+    }
+    |<TER>{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un Identificador.";
+        Asignar();
+    }
+    |/*EPSILON*/{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "No se ingres\u00f3 un identificador. Se esparaba un identificador."; 
+        Asignar();
+    }
+}
+void ARD3():{}{//Bool
+    <IDENTIFICADOR>{
+      /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */    
+        trans.Write_to_CPlus(token.image + " ");
+        IGCI = token.image;
+        Valor = token.image + "";
+        lugar = posicion_token();
+        validacionIDs();
+        Objeto_Variable.setValor(token.image);
+        AsignacionI();
+    }
+    |<TER>{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un Identificador.";
+        Asignar();
+    }
+    |/*EPSILON*/{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "No se ingres\u00f3 un identificador. Se esparaba un identificador."; 
+        Asignar();
+    }
+}
+void ARD4():{}{//Condicional
+    Pval()
+    (<LI> | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    (Id_Para_Estrucuras() | mientras() | Condiciones() | para() | Funciones() )*
+    try{Condiciones() |
+    <LD>
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+}
+void ARD5():{}{//Ciclo mientras
+    (<LI>{
+        ECI.EscribirB("Label"+ (++label) + "\nmientras {\n\n");
+        CIsinOptim.EscribirB("Label"+ (++label2) + "\nmientras {\n\n");
+    } | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    (Id_Para_Estrucuras() | Condiciones() | mientras() | para() | Funciones())*
+    try{
+    <LD>{
+        ECI.EscribirB("} goto Label"+label+"\nLabel"+(++label));
+        CIsinOptim.EscribirB("} goto Label"+label2+"\nLabel"+(++label2));
+    }
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+}
+void ARD6():{}{//Ciclo para
+    //
+    
+    PValR() 
+    (<LI> | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    try{
+    (Id_Para_Estrucuras() | Condiciones() | mientras() | para() | Funciones())* 
+    <LD>
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+}
+void ARD7():{}{
+    {A += TE[0] + posicion_token() + "Se ingres\u00f3 " + token.image + ". No es reconocido";}
+}
+//----------------------FINAL DE MÉTODOS SOLO PARA ARRANCAR*******************************-
+
+
+//----------------------INICIO DE MÉTODOS PARA DECLARACIONES Y OPERACIONES-------------------
+
+void Id_Para_Estrucuras():{}{//Se le da un valor a alguna variable ya declarada, este método es llamado por las Estructuras
+    <IDENTIFICADOR>{//verifica el tipo
+        vigilanteId = true;
+        String temToken = token.image;
+        String temTypeId = "";
+           
+        for (ParOrd e : ParOrdenado) {
+            if (e.id.equals(temToken)) {
+                temTypeId = e.tipo;
+                e.id_uso();
+                break;
+            }
+        }
+        if (!temTypeId.equals("")){
+            switch(temTypeId){
+                case "Num":
+                    //System.out.println("Num");
+                    /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+                    Valor = token.image;
+                    IGCI = token.image;
+                    trans.Write_to_CPlus(token.image);   
+                    lugar = posicion_token();
+                    Asignar();
+                    break;
+                case "Cad":
+                    
+                    /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+                    Valor = token.image + "";
+                    IGCI = token.image;
+                    trans.Write_to_CPlus(token.image);
+                    lugar = posicion_token();
+                    AsignacionS();
+                    break;
+                case "Bool":
+                    /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+                    IGCI = token.image;
+                    Valor = token.image + "";
+                    trans.Write_to_CPlus(token.image);
+                    lugar = posicion_token();
+                    Objeto_Variable.setValor(token.image);
+                    AsignacionI();
+                    break;
+            }
+        }else {
+            vigilanteId = false;
+            AsignacionesVND();
+        }
+    }
+
+}
+
+//INICIO BLOQUE PARA GRAMÁTICA DE DECLARACIÓN DE VARIABLES NUMÉRICAS*******************************------
+void Asignar()throws ParseException:{}//ASIGNACIÓN de valor a las variables o el punto y coma
+{    
+    <ASIGNACION>{    
+        trans.Write_to_CPlus("= ");    
+        codigo_aritmetico = new CTDOA();       
+        IOV();
+    }
+    | <PC>{
+        trans.Write_to_CPlus(";\n");
+    }
+    | <TER>{
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba el s\u00edmbolo de \"Asignaci\u00f3n/Punto y Coma\".";
+        
+    }
+    | /*EPSILON*/{
+        vigilanteId = false;
+        if(token.kind == IDENTIFICADOR){
+            try{
+            jj_consume_token(V_NUM);
+            A+= TE[1] + posicion_token() + "No se ingres\u00f3 el s\u00edmbolo de \"Asignaci\u00f3n\".";
+            Operadores();
+            }catch(ParseException e){
+                A+= TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 el \"Punto y Coma\".";
+            }
+        }        
+    }
+     
+}
+void IOV()throws ParseException:{}//ID ó VALOR
+{
+    //NO-TERMINALES ACEPTADOS
+    <V_NUM> {
+        trans.Write_to_CPlus(token.image+" ");
+        Objeto_Variable.setValor(token.image);
+        codigo_aritmetico.add(token.image+"");
+        Operadores();
+    }
+    |<IDENTIFICADOR> {
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image+" ");
+        Objeto_Variable.setValor(token.image);
+        codigo_aritmetico.add(token.image);       
+        Operadores();
+    }
+
+    //NO-TERMINALES INVÁLIDOS
+    | <V_ALF_NUM> {
+        vigilanteId = false;
+        lugar = "(Lin." + token.beginLine + " Col."+ token.beginColumn +")";        
+        incompatibilidad_Operando(token.image,"N\u00famero (Num).");            
+        Operadores();    
+    }
+    | <VF> {
+        vigilanteId = false;
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"N\u00famero (Num).");
+        Operadores();
+    }
+    | <TER> {//Token Error-No Pertenecen a la gramática
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un n\u00famero";
+        Operadores();
+    }
+    | /*EPSILON*/{
+        vigilanteId = false;
+        A+= TE[1] + posicion_token() + "No se ingres\u00f3 un operando. Ingrese un n\u00famero";
+        Operadores();
+    }
+
+}
+void Operadores()throws ParseException:{} // OPERADORES
+{
+    //TERMINAL
+    <PC>{
+        trans.Write_to_CPlus(";\n");
+        if(vigilanteId){
+            System.out.println(codigo_aritmetico.longitud());
+            if(codigo_aritmetico.longitud()>=3){                
+                CI += codigo_aritmetico.generarCodigo();
+                CI += "    " + "    " + codigo_aritmetico.nombreVariable + "    " + Valor + "\n\n";
+                CISoptm +=codigo_aritmetico.generarCodigosinoptimizar();
+                CISoptm+="    " + "    " + codigo_aritmetico.nombreVariable + "    " + Valor + "\n\n";
+                CIsinOptim.EscribirOA(CISoptm);
+                ECI.EscribirOA(CI);
+                codigo_aritmetico = new CTDOA(); 
+                CISoptm ="";
+                CI = "";
+            }else{
+                ECI.EscribirOA( "        " + Objeto_Variable.getString() + "    "+ Valor + "\n\n");//Al ser correcta la declaración se genera el código intermedio
+                CIsinOptim.EscribirOA( "        " + Objeto_Variable.getString() + "    "+ Valor + "\n\n");//Al ser correcta la declaración se genera el código intermedio
+            }
+        }else vigilanteId = true;        
+        
+        codigo_aritmetico = new CTDOA();
+    
+    }
+    //NO-TERMINALES ACEPTADOS
+    | <MAS> {
+        trans.Write_to_CPlus("+ ");
+        codigo_aritmetico.add(token.image);
+        IOV();
+    } 
+    | <MENOS> {
+        trans.Write_to_CPlus("- ");
+        codigo_aritmetico.add(token.image);
+        IOV();
+    }  
+    | <MULT> {
+        trans.Write_to_CPlus("* ");
+        codigo_aritmetico.add(token.image);       
+        IOV();
+    } 
+    | <DIV> {
+        trans.Write_to_CPlus("/ ");
+        codigo_aritmetico.add(token.image);
+        IOV();
+    } 
+    | <RESIDUO> {
+        trans.Write_to_CPlus("% ");
+        codigo_aritmetico.add(token.image);
+        IOV();
+    } 
+    //NO-TERMINALES INVÁLIDOS
+    | <UNION> {
+        vigilanteId = false;
+        A+= TE[2]+ posicion_token() + "Se ingres\u00f3 el operador de uni\u00f3n '~'. Se esparaba un operador arit\u00e9mtico (+ , - , * , / , %)";
+        IOV();
+    }
+    | <TER> {//token error-no pertenecen a la gramatica
+        vigilanteId = false;
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un operador aritm\u00e9tico (+ , - , * , / , %)";
+        IOV();
+    }
+    | /*EPSILON*/{
+        vigilanteId = false;
+        try{
+            jj_consume_token(V_NUM);
+            A+= TE[1] + posicion_token() + "No se ingres\u00f3 un operador aritm\u00e9tico. Podr\u00eda utilizar algo como: + , - , * , / , %";
+            Operadores();
+        } catch(ParseException e){
+            A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un punto y coma. Se debe a\u00f1adir";
+        }
+    }
+}
+///FIN BLOQUE PARA GRAMATICA DE DECLARACION DE VARIABLES NUMERICAS*******************************--------
+
+///INICIO BLOQUE PARA GRAMATICA DE DECLARACION DE VARIABLES STRING*******************************--------
+void AsignacionS()throws ParseException:{}//ASIGNACIÓN ó PUNTO Y COMA
+{
+    //(Asignacion() DCE()) | Fdi()
+    <ASIGNACION>{
+        trans.Write_to_CPlus("= ");
+        DCE();
+    } 
+    | <PC>{ //Escribir bien
+        trans.Write_to_CPlus(";\n");
+    }
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un signo de asignaci\u00f3n(=) ó punto y coma (;)";
+    }
+    |/*EPSILON */{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un punto y coma. Se debe a\u00f1adir";
+    }
+}
+void DCE()throws ParseException:{}//ID ó VALOR
+{
+    //NO-TERMINALES ACEPTADOS
+    <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image + " ");
+        OperacionesS(); 
+    }
+    |<V_ALF_NUM>{
+        trans.Write_to_CPlus("\"" + subString(token.image) + "\"");
+        OperacionesS();
+    }
+    //NO-TERMINALES INVALIDOS
+    | <V_NUM> {  
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Cadena (Cad)");          
+        OperacionesS();    
+    }
+    | <VF> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Cadena (Cad)");
+        OperacionesS();
+    }
+    | <TER> {//token error-no pertenecen a la gramatica
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido ' " + token.image + " '. Se esparaba un valor Alfanum\u00e9rico";
+        OperacionesS();
+    }
+    | /*EPSILON*/{
+        A+= TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un Valor v\u00e1lido. Se debe ingresar alguna cadena de letras y/o n\u00fameros";
+        OperacionesS();
+    }
+}
+void OperacionesS()throws ParseException:{}//OPERACIONES CON STRING (~)
+{
+    //NO-TERMINALES ACEPTADOS
+    <UNION>{
+        trans.Write_to_CPlus(" + ");
+        DCE();
+    }
+    //TERMINAL
+    | <PC>{
+        trans.Write_to_CPlus(";\n");
+    }
+    //NO-TERMINALES INVALIDOS
+    | <MAS> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Uni\u00f3n (~)");
+        DCE();
+    } 
+    | <MENOS> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Uni\u00f3n (~)");
+        DCE();
+    }  
+    | <MULT> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Uni\u00f3n (~)");
+        DCE();
+    } 
+    | <DIV> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Uni\u00f3n (~)");
+        DCE();
+    } 
+    | <RESIDUO> {
+        lugar = "(Lin." +token.beginLine+", Col."+token.beginColumn+")";
+        incompatibilidad_Operando(token.image,"Uni\u00f3n (~)");
+        DCE();
+    } 
+    | <TER> {//token error-no pertenecen a la gramatica
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba el operador uni\u00f3n \u00f3 punto y coma";
+        DCE();
+    }
+    | /*EPSILON*/{
+        try{
+            jj_consume_token(V_ALF_NUM);
+
+            A+= TE[1] + posicion_token() + "No se ingres\u00f3 un operador v\u00e1lido. Se esparaba el operador uni\u00f3n \u00f3 punto y coma";
+            OperacionesS();
+        } catch(ParseException e){
+            A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un punto y coma. Se debe a\u00f1adir";
+        }        
+    }
+}
+///FIN BLOQUE PARA GRAMATICA DE DECLARACION DE DE VARIABLES STRING*******************************--------
+
+///INICIO BLOQUE PARA GRAMATICA DE DECLARACION DE DE VARIABLES BOOLEANAS*******************************--------
+
+void AsignacionI()throws ParseException:{}// ASIGNACION Ó PUNTO Y COMA COMO TERMINAL PARA UN SENTENCIA INCOMPLETA
+{
+    //no-terminales validos
+    <ASIGNACION>{
+        trans.Write_to_CPlus("= ");
+       DCK();
+    }
+    //no-terminales invalidos
+    | <PC>{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una asignaci\u00f3n. Se esperaba algo como: Bool " + Objeto_Variable.getString() + " = Verdadero;";
+    }
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba el signo de asignaci\u00f3n (=)";
+    }
+    |/*EPSILON*/{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una asignaci\u00f3n. Se esperaba algo como: Bool " + token.image + " = Verdadero;";
+    }
+}
+
+void DCK () throws ParseException:{}{//VERDADERO Ó FALSO
+    //NO-TERMINALES PERMITIDOS
+    <VF>{
+        if(token.image.equals("Verdadero"))
+        trans.Write_to_CPlus("true ");
+        else trans.Write_to_CPlus("false");
+        DCL();
+    }
+    //NO-TERMINALES INVALIDOS
+    | <MAS> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    } 
+    | <MENOS> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    }  
+    | <MULT> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    } 
+    | <DIV> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    } 
+    | <RESIDUO> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    } 
+    |<V_ALF_NUM>{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    }    
+    | <V_NUM> {
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "Se ingres\u00f3 un valor incompatible \""+ token.image+"\". Se esparaba un Verdadero ó Falso";
+        DCL();
+    }
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un Verdadero ó Falso";
+        DCL();
+    }
+    | /*EPSILON*/{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 el valor Booleano. Se esparaba un Verdadero ó Falso";
+        DCL();
+    }
+}
+void DCL() throws ParseException:{}{//PUNTO Y COMO CON TERMINAL CORRECTO
+    //TERMINAL PERMITIDO
+    <PC>{
+        trans.Write_to_CPlus(";\n");
+    }
+    //NO PERMITIDOS
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba un Punto y coma";
+    }
+    | /*EPSILON*/{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un punto y coma. Se debe a\u00f1adir";
+    }
+}
+
+///FIN BLOQUE PARA GRAMATICA DE DECLARACION DE DE VARIABLES BOOLEANAS*******************************
+
+///INICIO BLOQUE PARA GRAMATICA DE DECLARACION DE DE VARIABLES NO DECLARADAS*******************************
+void AsignacionesVND() throws ParseException:{}{//ASIGNACION PARA VARIABLES SIN DECLARAR Ó PUNTO Y COMA PARA EL CASO DE UNA ASIGNACION IMCOMPLETA
+    <ASIGNACION>{
+       DCS();
+    }
+    | <PC>{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una asignaci\u00f3n. Se esperaba algo como: " + Objeto_Variable.getString() + " = Verdadero;";
+    }
+    | <TER>{
+        A+= TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + "'. Se esparaba el signo de asignaci\u00f3n (=)";
+        DCS();
+    }
+    |/*EPSILON*/{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 el s\u00edmbolo de asignaci\u00f3n. Se esparaba el signo de asignaci\u00f3n (=)";
+        DCS();
+    }
+}
+void DCS()throws ParseException:{}{//VALOR ASIGNADO A LA VARIABLE, SEGUN EL PRIMER TIPO SE PREDECIDIRA EL TIPO DE VARIABLE QUE ES
+    <IDENTIFICADOR>{
+        CoperadorOPC();
+    }
+    | <V_NUM>{
+        Operadores();
+    }
+    | <V_ALF_NUM>{
+        OperacionesS();
+    }
+    | (<VF> <PC>)
+    | <TER>{
+        A+=TE[0] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + ". Se esperaba alg\u00fan valor (num\u00e9rico, alfanum\u00e9rico, booleano)";
+    }
+    | /*EPSILON*/{
+        A+=TE[2] + posicion_token_edit(0, token.image.length()) + "No se le ha asignado ning\u00fan valor a la variable \'" + token.image + ". La podr\u00eda retirar";
+    }
+
+}
+void CoperadorOPC()throws ParseException:{}//CONCATENACION DE UN OPERADOR Ó UN PUNTO Y COMA
+{
+    <PC>
+    | <MAS>{ IOV(); }
+    | <MENOS>{ IOV(); }
+    | <MULT>{ IOV(); }
+    | <DIV>{ IOV(); }
+    | <RESIDUO>{ IOV(); }
+    | <UNION>{ DCE(); }
+    | <TER>{
+        A+=TE[1] + posicion_token() + "Se ingres\u00f3 un s\u00edmbolo no reconocido '" + token.image + ". Se esperaba un operador aritm\u00e9tico (+, -, *, /, %, ~)";
+    }
+    | /*EPSILON*/{
+        A+=TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 ning\u00fan s\u00edmbolo aritm\u00e9tico. Se esperaba un operador aritm\u00e9tico (+, -, *, /, %, ~) o un punto y coma (;)";
+    }
+}
+///FIN BLOQUE PARA GRAMATICA DE DECLARACION DE DE VARIABLES NO DECLARADAS*******************************
+
+//********************FIN DE METODOS PARA DECLARACIONES Y OPERACIONES***********************
+
+
+
+
+//****************************INICIO DE GRAMATICAS PARA IF*************************
+void Condiciones():{}{
+    <IF>{
+        trans.Write_to_CPlus("if ( ");
+    } 
+    /*(<PI> | {
+        A += TE[0] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Izquierdo. Se debe agregar \" ( \"";
+    })  */
+
+     Pval() 
+
+    (<LI> | /*EPSILON*/{
+        A += TE[0] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    (Id_Para_Estrucuras() | Condiciones() | mientras() | para() | Funciones()| Romper())*
+    try{
+    <LD>{
+        trans.Write_to_CPlus("}\n");
+    }
+    }catch (ParseException e){
+        A += TE[0] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+
+    
+}
+void Pval():{}{//INGRESO DEL 1ER VALOR EN UNA COMPARACION
+    (<PI> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Izquierdo. Se debe agregar \" ( \"";
+    })
+    
+    (<VF>{
+        if(token.image.equals("Verdadero"))
+        trans.Write_to_CPlus("true ");
+        else trans.Write_to_CPlus("false ");;
+        CNZ();
+    }/*
+    | <FALSO>{
+        CNZ();
+    }*/
+    | <V_NUM>{
+        trans.Write_to_CPlus(token.image + " ");
+        OperadorC();
+    }
+    | <V_ALF_NUM>{
+        trans.Write_to_CPlus(token.image + " ");
+        OperdadorCS();
+    }
+    | <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image + " ");
+        CNF();//se redirecciona validando el tipo de dato
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable. Se debe agregar una o un valor a comparar";
+        OperadorC();
+    }
+)
+}
+void OperadorC():{}{//OPERADORES COMPARATIVOS PARA VALORES NUMERICOS
+    //NO-TERMINALES VALIDOS
+    <MAYORQ>{
+        trans.Write_to_CPlus("> ");
+        Sval();
+    }
+    | <MENORQ>{
+        trans.Write_to_CPlus("< ");
+        Sval();
+    }
+    | <IGUAL>{
+        trans.Write_to_CPlus("== ");
+        Sval();
+    }
+    | <DIFERENTE>{
+        trans.Write_to_CPlus("!= ");
+        Sval();
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un comparador se debe agregar uno";
+        Sval();
+    }
+
+}
+void Sval():{}{//2DO VALOR A COMPARAR (NUMERO)
+    //NO-TERMINALES VALIDOS
+    <V_NUM>{
+        trans.Write_to_CPlus(token.image + " ");
+        CNZ();
+    }
+    | <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image + " ");
+        CNG("Num");//Se valida que sea Numero
+    }
+    | <VF>{
+        if(token.image.equals("Verdadero"))
+        trans.Write_to_CPlus("true");
+        else
+        trans.Write_to_CPlus("false");
+        CNZ();
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable. Se debe agregar una o un valor a comparar";
+        CNZ();
+    }
+}
+void OperdadorCS():{}{//OPERADORES COMPARATIVOS PARA VALORES ALFANUMERICOS
+    //NO-TERMINALES VALIDOS
+    <IGUAL>{
+        trans.Write_to_CPlus(" == ");
+        CNE();
+    }
+    | <DIFERENTE>{
+        trans.Write_to_CPlus(" != ");
+        CNE();
+    }
+    | <MAYORQ>{
+        trans.Write_to_CPlus(" > ");
+        CNE();
+    }
+    | <MENORQ>{
+        trans.Write_to_CPlus(" < ");
+        CNE();
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 comparador. Se esperraba un \" == \" o un \" != \"";
+        CNE();
+    }
+}
+void CNE():{}{//2DO VALOR A COMPARAR (ALFANUMERICO)
+    //NO-TERMINALES VALIDOS
+    <V_ALF_NUM>{
+        trans.Write_to_CPlus("\"" + subString(token.image) + "\" ");
+        CNZ();
+    }
+    | <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */  
+        trans.Write_to_CPlus(token.image);
+        CNG("Cad");//Se valida que sea Alfanumericos
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable. Se debe agregar una o un valor a comparar";
+        CNZ();
+    }
+}
+JAVACODE//METODO QUE REDIRECCIONA EL PRIMER VALOR PARA UN IDENTIFICADOR
+public void CNF(){
+    Valor = token.image;
+    String tipo_dato ="";
+
+    for(ParOrd e: ParOrdenado){//se revisa el tipo de dato
+        if(e.id.equals(Valor)){
+            tipo_dato = e.tipo;
+            break;
+        }
+    }
+    switch(tipo_dato){//se redirecciona segun el tipo de dato
+        case "Bool":
+            OperadorC();
+            break;
+        case "Num":
+            OperadorC();
+            break;
+        case "Cad":
+            OperdadorCS();
+            break;
+    }
+}
+JAVACODE
+public void CNG(String s){//METODO QUE VALIDA LA CONSISTENCIA DEL SEGUNDO VALOR PARA UN IDENTIFICADOR
+    // 1 == NUMERO, 2 == STRING
+
+    Valor = token.image;
+    String tipo_dato ="";
+
+    for(ParOrd e: ParOrdenado){//se revisa el tipo de dato actual
+        if(e.id.equals(Valor)){
+            tipo_dato = e.tipo;
+            break;
+        }
+    }
+    if(tipo_dato.equals(s)) CNZ();
+}
+void CNZ():{}{//METODO DONDE SE UBICA EL TEMRINAL
+    //NO-TERMINALES VALIDOS
+    <OR>{        
+        trans.Write_to_CPlus("|| ");
+        Pval();
+    }
+    | <AND>{
+        trans.Write_to_CPlus("&& ");
+        Pval();
+    }
+    //TERMINAL VALIDO
+    | (<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    } )
+      {        
+        trans.Write_to_CPlus(" ){\n");
+    }
+    /*{        
+        trans.Write_to_CPlus(" ){\n");
+    }*/
+}
+//------------------------------FIN DE METODOS PARA IF*******************************-
+
+
+//----------------------------INICIO DE GRAMATICAS PARA SWITCH------------------------------
+void Segun():{}{
+    //<SWITCH>{
+      //  trans.Write_to_CPlus("Switch(");
+    //}
+    (<PI> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Izquierdo. Se debe agregar \" ( \"";
+    }) 
+    (<V_NUM>{
+        trans.Write_to_CPlus("switch(" +token.image + "){ \n");}
+    |<IDENTIFICADOR> {
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");
+        trans.Write_to_CPlus("numeroEntero = static_cast<int>(" + ql +"); \n");
+        trans.Write_to_CPlus("switch(numeroEntero){ \n");  */  
+        trans.Write_to_CPlus("numeroEntero = static_cast<int>(" + token.image +"); \n");
+        trans.Write_to_CPlus("switch(numeroEntero){ \n");
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una  variable. Se debe agregar una variable o un numero entero";
+    }
+)
+
+        (<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    } )
+        (<LI> | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+
+        caso()
+      /*  ((<CASE>{
+            trans.Write_to_CPlus("case ");
+        } )
+            (<V_NUM>{
+                trans.Write_to_CPlus("token.image" + ": \n");
+        } )
+              <ASOCIATIVO> ( Id_Para_Estrucuras() | mientras() | para() | Funciones() )*
+             
+             (<ROMPER>{
+                trans.Write_to_CPlus("break; \n");
+             } )
+             (<PC>)
+         )**/
+         
+    
+    
+    /*try{
+    <LD>{
+        trans.Write_to_CPlus("}\n");
+    }
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    } */
+
+}
+
+void caso():{}{
+    ((<CASE>{
+            trans.Write_to_CPlus("case ");
+        }
+        | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 la palabra caso. Se debe agregar";
+    } 
+    )
+            (<V_NUM>{
+                trans.Write_to_CPlus(token.image + ": \n");
+        } 
+        |{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 el numero de caso. Se debe agregar un numero entero";
+    }
+    )
+              (<ASOCIATIVO> |   {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 \":\". Se debe agregar";
+    })
+                ( Id_Para_Estrucuras() | mientras() | para() | Funciones() )*
+             
+             (<ROMPER>{
+                trans.Write_to_CPlus("break; \n");
+             } |    {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 \"romper\". Se debe agregar";
+    }
+         )
+             (<PC>  {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 punto y coma. Se debe agregar \";\"";
+    })
+         ){caso();}
+    |
+    (<LD> {
+        trans.Write_to_CPlus("}\n");
+    } | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    } )
+
+}
+//----------------------------FIN DE GRAMATICAS PARA SWITCH------------------------------
+
+//*******************************INICIO DE GRAMATICAS PARA CICLOS(BUCLE)*******************************
+void mientras():{}{//Faltan errores
+    <WHILE> {
+        trans.Write_to_CPlus("While (true){\n");
+    }
+    (<LI>{
+        ECI.EscribirB("Label"+ (++label) + "\nmientras {\n\n");
+        CIsinOptim.EscribirB("Label"+ (++label2) + "\nmientras {\n\n");
+    } | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    (Id_Para_Estrucuras() | Condiciones() | mientras() | para() | Funciones()| Romper())*
+    try{
+    <LD>{
+        trans.Write_to_CPlus("}\n");
+        ECI.EscribirB("} goto Label"+label+"\nLabel"+(++label));
+        CIsinOptim.EscribirB("} goto Label"+label2+"\nLabel"+(++label));
+    }
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+    
+    
+    
+    
+    /*
+    <LI>{
+        ECI.EscribirB("Label"+ (++label) + "\nmientras {");
+        CIsinOptim.EscribirB("Label"+ (++label2) + "\nmientras {");
+    } (Condiciones() | mientras() | para() | Funciones())* <LD>{
+        ECI.EscribirB("} goto Label"+label+"\nLabel"+(++label));
+        CIsinOptim.EscribirB("} goto Label"+label2+"\nLabel"+(++label2));
+    }*/
+}
+//*******************************FIN DE METODOS PARA CICLOS(BUCLE)*******************************
+
+
+
+//*******************************INICIO DE GRAMATICAS FOR *******************************
+void para():{}{
+    <FOR>{
+        trans.Write_to_CPlus("for(");
+    } PValR()
+    (<LI> | /*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Izquierda. Se debe agregar \" { \"";
+    })
+    try{
+    (Id_Para_Estrucuras() | Condiciones() | mientras() | para() | Funciones())* 
+    <LD>{
+        trans.Write_to_CPlus("}\n");
+    }
+    }catch (ParseException e){
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una llave Derecha. Se debe agregar \" } \"";
+    }
+    /*<LI> (Condiciones() | mientras() | para() | Funciones())*
+    <LD>{
+        trans.Write_to_CPlus("}\n");
+    }*/
+}
+//INICIO DE LA CONDICION DE REPETIR
+void PValR():{}{
+    (<PI> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Izquierdo. Se debe agregar \" ( \"";
+    })
+    //TERMINALES VALIDOS    
+    (<VF>//
+    //NO-TERMINALES VALIDOS
+    | <V_NUM>{
+        trans.Write_to_CPlus(token.image);
+        RPC();
+    }
+    /*| <V_ALF_NUM>{
+        RPCS();
+    }*/
+    | <IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql + " = " + ql + "; "+ ql);
+        */  
+        trans.Write_to_CPlus(token.image + " = " + token.image + "; "+ token.image);
+        Valor = token.image;
+        String Type ="";
+
+        for(ParOrd e: ParOrdenado){//se revisa el tipo de dato
+            if(e.id.equals(Valor)){
+                Type = e.tipo;
+                break;
+            }
+        }
+        switch(Type){//se redirecciona segun el tipo de dato
+            case "Num":
+                RPC();
+                break;
+            /*case "Cad":
+                RPCS();
+                break;*/
+        }
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable o un numero entero. Se debe agregar uno";
+        RPC();
+    } )
+}
+void RPC():{}{//OPERADORES COMPARATIVOS PARA VALORES NUMERICOS
+    //NO-TERMINALES VALIDOS
+    <MAYORQ>{        
+        trans.Write_to_CPlus(" > ");
+        SValR();
+    }
+    | <MENORQ>{        
+        trans.Write_to_CPlus(" < ");
+        SValR();
+    }
+    | <IGUAL>{        
+        trans.Write_to_CPlus(" == ");
+        SValR();
+    }
+    | <DIFERENTE>{        
+        trans.Write_to_CPlus(" != ");
+        SValR();
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una comparador. Se debe agregar \" > \", \" < \", \" == \", o \" != \"";
+        SValR();
+    } 
+}
+void SValR():{}{//2DO VALOR A COMPARAR (NUMERO)
+    //TERMINALES VALIDOS
+    <V_NUM>{
+        trans.Write_to_CPlus(token.image);
+        RPG();
+    }
+    | <IDENTIFICADOR>{//VALIDAR
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql);  */  
+        Valor = token.image;
+        trans.Write_to_CPlus(token.image);
+       for (ParOrd e: ParOrdenado){
+        if(e.id.equals(Valor)){
+            Type = e.tipo;
+            break;
+        }
+       }
+       if (!Type.equals("Num"))
+        A+= TE[2] + posicion_token() + "El ID ingresado \"" + token.image + "\" no corresponde a un tipo de dato correcto. Se esperaba un valor de tipo Num\u00e9rico (Num)";
+       RPG();
+    }
+    | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable o un numero entero. Se debe agregar uno";
+        RPG();
+    } 
+}
+
+//*****************FIN DE LA CONDICION DEL CICLO REPETIR***************
+//INICIO DEL PROCESO ASOCIATIVO DEL CICLO REPETIR
+void RPG():{}{
+    (<PC> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 un punto y coma. Se debe agregar \" ; \"";
+    } )
+    (<IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus("; " + ql);  */ 
+        trans.Write_to_CPlus("; "+token.image);
+        Valor = token.image;
+        Type = "";
+        for(ParOrd e: ParOrdenado){
+            if(e.id.equals(Valor)){
+                Type = e.tipo;
+                break;
+            }
+        }
+        if(!Type.equals("Num"))
+        A+= TE[2] + posicion_token() + "El ID ingresado \"" + token.image + "\" no corresponde a un tipo de dato correcto. Se esperaba un valor de tipo Num\u00e9rico (Num)";
+        RPI();
+    } | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una variable. Se debe agregar una";
+        RPI();
+    } )
+}
+void RPI():{}{// funcion del ++ etc
+    <MAS>{
+        trans.Write_to_CPlus(" = " + Valor + " + ");
+        RPJ();
+    }
+    | <MENOS>{//
+        trans.Write_to_CPlus(" = " + Valor + " - ");
+        RPJ();
+    }
+    | <MULT>{
+        trans.Write_to_CPlus(" = " + Valor + " * ");
+        RPJ();
+    }
+    | <DIV>{//no aplica, quitar
+        trans.Write_to_CPlus(" = " + Valor + " / ");
+        RPJ();
+    }
+    | <RESIDUO>{//no aplica, quitar
+        trans.Write_to_CPlus(" = " + Valor + " % ");
+        RPJ();
+    }
+}
+void RPJ():{}{
+    (<IDENTIFICADOR>{
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +") {\n");  */ 
+        trans.Write_to_CPlus(token.image + ") {\n");
+        Valor = token.image;
+        trans.Write_to_CPlus(token.image);
+        Type = "";
+        for(ParOrd e: ParOrdenado){
+            if(e.id.equals(Valor)){
+                Type = e.tipo;
+                break;
+            }
+        }
+        if(!Type.equals("Num"))
+        A+= TE[2] + posicion_token() + "El ID ingresado \"" + token.image + "\" no corresponde a un tipo de dato correcto. Se esperaba un valor de tipo Num\u00e9rico (Num)";
+    }
+    (<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    } )
+)
+    | (<V_NUM>{        
+        trans.Write_to_CPlus(token.image + ") {\n");
+    }
+    (<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    } ))
+}
+//*******************************FIN DE METODOS PARA CICLOS(FOR)*******************************
+
+
+
+
+//*******************************INICIO DE LECTURA Y ESCRITURA*******************************
+void Funciones():{}{
+    leer_Teclado() | Impresion_Pantalla()
+}
+
+//*******************************INICIO DE GRAMATICA ENTRADA_TECLADO*******************************
+void leer_Teclado():{}{
+    <LEER>{
+        //trans.Write_to_CPlus("cin >> ");
+        ETA();
+    }| <TER>{
+        A += TE[0] + posicion_token() + "Se ingres\u00f3 " + token.image + ". Se esperaba la palabra \" leer \"";
+    }
+}
+void ETA():{}{
+    (<PI>{
+        ETB();
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "No se ingres\u00f3 una parentesis Izquierdo Se debe agregar \" ( \"";
+        ETB();
+    })    
+}
+void ETB():{}{
+    <IDENTIFICADOR>{//VALIDAR QUE EXISTE EL ID
+        /*String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */ 
+        trans.Write_to_CPlus("numeroEntero = s.compare(typeid(" + token.image +").name()); \n");
+        trans.Write_to_CPlus("if (numeroEntero == 0) {");
+        trans.Write_to_CPlus("cin >> input;\n");
+        trans.Write_to_CPlus("try {\n");
+        trans.Write_to_CPlus(token.image + " = stoi(input); \n }");
+        trans.Write_to_CPlus("catch (const invalid_argument& e){\n");
+        trans.Write_to_CPlus("cout << \"Error fatal: No ingresaste un numero. \\n\"; \n");
+        trans.Write_to_CPlus("return 0; }\n } \n");
+        trans.Write_to_CPlus("else{\n");
+        trans.Write_to_CPlus("cin >> " +token.image + ";\n }"); 
+       // trans.Write_to_CPlus();
+      //  trans.Write_to_CPlus();
+      //  trans.Write_to_CPlus();
+
+        
+
+      //  trans.Write_to_CPlus(token.image);
+        ETC();
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "Se esperaba algun ID. Se de ingresar ID";
+        ETC();
+    }
+}
+void ETC():{}{
+    ((<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    }) 
+    (<PC>{
+     //   trans.Write_to_CPlus(";\n");        
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "Se esperaba algun punto y coma. Se debe ingresar \" ; \"";
+    }))
+}
+//*******************************FIN DE METODO ENTRADA_TECLADO*******************************
+//*******************************INICIO DE GRAMATICA IMPRESION_PANTALLA*******************************-
+void Impresion_Pantalla():{}{
+    <IMPRIMIR>{
+        trans.Write_to_CPlus("cout << ");
+        IPA();
+    }
+}
+void IPA():{}{
+    <PI>{
+        IPB();
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "No se ingres\u00f3 una parentesis Izquierdo Se debe agregar \" ( \"";
+        IPB();
+    }
+}
+void IPB():{}{
+    <IDENTIFICADOR>{  
+     /*   String im = ql(token.image);
+        trans.Write_to_CPlus(ql +" ");  */
+        trans.Write_to_CPlus(token.image+" ");      
+        IPC();
+    }
+    | <V_ALF_NUM>{
+        System.setProperty("file.encoding", "UTF-8");
+        String pruebe = subString(token.image);
+        char  pchar=163;
+       pruebe = pruebe.replaceAll("\u00fa","hola si funciona1");
+        // pruebe = pruebe.replaceAll("Ãº","hola si funciona2");
+          pruebe = pruebe.replaceAll("ú","\u00fa");//\u00e9
+          pruebe = pruebe.replaceAll("é","\u00e9");
+          pruebe = pruebe.replaceAll("á","\u00e1");
+          pruebe = pruebe.replaceAll("í","\u00ed");
+          pruebe = pruebe.replaceAll("ó","\u00f3");
+          pruebe = pruebe.replaceAll("ñ","\u00f1");
+      //  trans.Write_to_CPlus("\"" + subString(token.image) +"\" ");      
+        trans.Write_to_CPlus("\"" + pruebe +"\" ");          
+        IPC();
+    }
+    | <V_NUM>{   
+        trans.Write_to_CPlus(token.image+" ");     
+        IPC();
+    }
+    | <VF>{        
+        trans.Write_to_CPlus(token.image+" ");
+        IPC();
+    }
+    | <TER>{
+        A += TE[0] + posicion_token() + "Se ingres\u00f3 " + token.image + ". Se esperaba alguno como : ID, Num, Cad, Bool";
+        IPC();
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "Se esperaba algun valor. Un valor \"id\", numero, Cadena, Booleano";
+        IPC();
+    }
+
+}
+void IPC():{}{
+    <UNION>{
+        trans.Write_to_CPlus("<< ");
+        IPB();
+    }
+    |
+    ((<PD> | {
+        A += TE[1] + posicion_token_edit(0, token.image.length()) + "No se ingres\u00f3 una parentesis Derecho. Se debe agregar \" ) \"";
+    })  
+    (<PC>{
+        trans.Write_to_CPlus("<< endl;\n");
+    }
+    |/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "Se esperaba algun punto y coma. Se debe ingresar \" ; \"";
+    }))
+}
+
+
+//*******************************FIN DE LECTURA Y ESCRITURA*******************************
+
+//*******************************INICIO DE GRAMATICA ROMPER*****************************
+void Romper():{}{
+    (<ROMPER>{
+        trans.Write_to_CPlus("break;\n");
+    }  )
+    (<PC>|/*EPSILON*/{
+        A += TE[1] + posicion_token_edit(0, token.image.length() + 1) + "No se ingres\u00f3 un punto y coma. Se debe ingresar \" ; \".";
+    })
+}
+
+//*******************************FIN DE GRAMATICA ROMPER******************************
+
+//*******************************INICIO_UBICACION DEL TOKEN*******************************
+JAVACODE
+public String posicion_token(){ // lugar de la incidencia
+    return "(Lin." + token.beginLine + ", Col." + token.beginColumn + "). ";
+}
+
+JAVACODE
+public String posicion_token_edit(int i, int e){ // lugar de la incidencia
+    return "(Lin." + (token.beginLine + i )+ ", Col." + (token.beginColumn + e) + "). ";
+}
+//*******************************FIN_UBICACION DEL TOKEN*******************************
+
+
+
+
+//*******************************INICIO_VALIDACION DE OPERADORES Y OPERANDOS *******************************
+JAVACODE
+public void incompatibilidad_Operando(String V, String tipo){//metodo de error para operando incorrecto
+    A+="\nError Sem\u00e1ntico. " + lugar + " El valor ' " + V + " ' no corresponde al tipo de dato. Se esperaba un " + tipo;
+}
+//*******************************INICIO_VALIDACION DE OPERADORES Y OPERANDOS ------------------------
+
+
+
+
+//*******************************INICIO_VALIDACION DE EXISTENCIA DE VARIABLES-----------------------------
+JAVACODE 
+public void ingresoIDs(){//almacenamiento de identificadores y su tipo
+    ParOrdenado.add(new ParOrd(Type, Valor));
+    ECI.EscribirD(Type + "   " + Valor + "\n\n");//Al ser correcta la declaracion se genera el codigo intermedio
+    CIsinOptim.EscribirD(Type + "   " + Valor + "\n\n");//Al ser correcta la declaracion se genera el codigo intermedio
+}
+JAVACODE
+public void validacionIDs(){//validacion de que no existe otra variable con el mismo nombre declarada
+    boolean v = false;
+    for(ParOrd e : ParOrdenado){
+        if(e.id.equals(Valor)){
+            v  = true;
+            break;
+        }
+    }
+    if(v) A +="\nError Sem\u00e1ntico. " + lugar + " El id ' " + Valor + " ' ya está en uso";
+    else ingresoIDs();
+}
+JAVACODE
+public void ExistenciaIDs(){//validacion de que las variables hayan sido declaradas
+    boolean v = false;              // false para variable no declarada, true para variable declarada
+    String TipoDato = "";
+    for(ParOrd e : ParOrdenado){
+        if(e.id.equals(Valor)){
+            TipoDato = e.tipo;
+            v = true;
+            break;
+        }
+    }
+    if(v) switch(TipoDato){
+            case "Num":
+                OperadorC();
+                break;
+            case "Cad":
+                //falta
+                break;
+            case "Bool":
+                //CNY();
+                break;
+    } else OperadorC();
+}
+JAVACODE                            //validacion de que las variables hayan sido declaradas
+public void ExistenciaIDsConRedir(){//existencia de variables con redireccion al tipo de declaracion
+    boolean v = false;
+    String s = "";
+    for(ParOrd e : ParOrdenado){
+        if(e.id.equals(Valor)){
+            v = true;
+            s = e.tipo;           
+            e.id_uso();//se aumenta su contador razonando que la varibale se esta utilizando.
+            break;
+        }
+    }
+    if(!v) {
+        vigilanteId = false;
+        A +="\nError Sem\u00e1ntico. " + lugar + " El id ' " + Valor + " ' no se ha declarado"; 
+        T = true;       
+        AsignacionesVND();
+    }
+    else {// si existe la variable
+        switch(s){
+            case "Num":
+                Asignar();
+                break;
+            case "Cad":
+                AsignacionS();
+                break;
+            case "Bool":
+                AsignacionI();
+                break;            
+        }
+    }
+}
+JAVACODE
+public void Declaracion(){
+    ECI.EscribirD(Type + "   " + Valor + "        "  + "null\n\n");//Al ser correcta la declaracion se genera el codigo intermedio
+    CIsinOptim.EscribirD(Type + "   " + Valor + "        "  + "null\n\n");//Al ser correcta la declaracion se genera el codigo intermedio
+}
+//*******************************FIN_VALIDACION DE VARIABLES*******************************
+JAVACODE
+public String subString(String s){
+    String s1 = s.substring(1, (s.length()-1));
+    /*for(int i= 0; i<s.length(); i++){
+        if(i != 0 && i != (s.length-1))
+        s1+=s.cha
+    }*/
+    return s1;
+}
+
+
+
+/*Glosario
+ * OI = origen de la impresion
+ */

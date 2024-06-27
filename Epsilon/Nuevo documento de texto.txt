@@ -1,0 +1,19 @@
+Inicio
+Cad A1;
+Cad B2;
+imprimir("ingrese la primera cadena:");
+leer(A1);
+imprimir("ingrese la segunda cadena");
+leer(B2);
+si(A1>B2){
+	imprimir("la cadena mas grande es :~A1);
+	imprimir("la cadena mas corta es :" B2);
+}
+si (B2>A1){
+	imprimir("la cadena mas grande es:"~B2);
+	imprimir("la cadena mas corta es :"~A1);
+}
+si (A1==B2){
+	imprimir(las cadenas son iguales);
+}
+Fin

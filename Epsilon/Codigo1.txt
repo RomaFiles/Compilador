@@ -1,0 +1,65 @@
+Inicio 
+
+Num Y;
+Bool Z = Falso;
+Cad F = 'hola';
+Y = 0;
+Num A;
+Num B;
+Num C;
+Num E;
+Num I;
+Num R;
+Num M;
+Num D;
+Num C1;
+imprimir ('Ingresa un número');
+leer ( A);
+imprimir ('Ingresa un digito');
+leer (B);
+imprimir ('Ingresa un digito');
+leer (C);
+si (A < B) {
+        imprimir ('hola');
+}
+mientras {
+    Z = Falso;
+
+    si (A < B) {
+        imprimir ('El numero mayor es '~ A);
+	imprimir ('El numero menor es '~ B);
+    }
+    si (A > B) {
+        imprimir ('El numero mayor es '~ B);
+	imprimir ('El numero menor es '~ A);
+    }
+    si (B < C) {
+        Y= B ;
+        B= C ;
+        C= Y ;
+        Z = Verdadero;
+    }
+
+
+    si (Z == Falso) {
+        romper;
+    }
+}
+
+
+
+para (I <6 ; I +1){
+
+imprimir(' ');
+imprimir('Ciclo numero ' ~ I);
+imprimir(' ');
+si (A > B){
+imprimir ('El mayor es ' ~ A);
+imprimir ('El de en medio es ' ~ B);
+imprimir ('El menor es ' ~ C) ;
+}
+si (A == B){
+imprimir ('los numeros son iguales');
+}
+}
+Fin

@@ -1,0 +1,19 @@
+Inicio 
+
+Num Y;
+Bool Z = Falso;
+Cad F = 'hola';
+Y = 0;
+Num A;
+Num X = 42;
+Num B;
+Num C;
+Num E;
+Num I;
+Num R;
+Num M;
+Num D;
+Num C1;
+Num P = 1000;
+imprimir ('Hola'
+Fin

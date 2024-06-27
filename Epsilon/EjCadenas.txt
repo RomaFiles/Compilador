@@ -1,0 +1,95 @@
+Inicio
+Cad A1;
+Cad B2;
+Cad C3;
+imprimir('ingrese la primera cadena:');
+leer(A1);
+imprimir('ingrese la segunda cadena');
+leer(B2);
+imprimir('ingrese la tercera cadena');
+leer(C3);
+
+si(A1 < B2){
+	si(A1<C3){
+		imprimir('La cadena '~A1~' es la menor');
+		si (B2<C3){
+			imprimir('La cadena '~B2~' es la intermedia' );
+			imprimir('La cadena '~C3~' es la mayor' );
+		}
+		si (C3<B2){
+			imprimir('La cadena '~C3~' es la intermedia' );
+			imprimir('La cadena '~B2~' es la mayor' );	
+		}
+	}
+}
+
+si(B2 < A1){
+	si(B2<C3){
+		imprimir('La cadena '~B2~' es la menor');
+		si (A1<C3){
+			imprimir('La cadena '~A1~' es la intermedia' );
+			imprimir('La cadena '~C3~' es la mayor' );
+		}
+		si (C3<A1){
+			imprimir('La cadena '~C3~' es la intermedia' );
+			imprimir('La cadena '~A1~' es la mayor' );	
+		}
+	}
+}
+
+si(C3 < B2){
+	si(C3<A1){
+		imprimir('La cadena '~C3~' es la menor');
+		si (B2<A1){
+			imprimir('La cadena '~B2~' es la intermedia' );
+			imprimir('La cadena '~A1~' es la mayor' );
+		}
+		si (A1<B2){
+			imprimir('La cadena '~A1~' es la intermedia' );
+			imprimir('La cadena '~B2~' es la mayor' );	
+		}
+	}
+}
+
+si(A1==B2){
+	si (A1<C3){
+		imprimir('las cadenas '~A1~' y '~B2~' son iguales');	
+		imprimir('la cadena '~C3~' es la mayor');
+	}
+	si (C3<A1){
+		imprimir('las cadenas '~A1~' y'~B2~' son iguales');	
+		imprimir('la cadena '~C3~' es la menor');	
+	}
+
+}
+
+si(A1==C3){
+	si (A1<B2){
+		imprimir('las cadenas '~A1~' y '~C3~' son iguales');	
+		imprimir('la cadena '~B2~' es la mayor');
+	}
+	si (B2<A1){
+		imprimir('las cadenas '~A1~' y '~C3~' son iguales');	
+		imprimir('la cadena '~B2~' es la menor');	
+	}
+
+}
+
+si(C3==B2){
+	si (A1<C3){
+		imprimir('las cadenas '~C3~' y '~B2~' son iguales');	
+		imprimir('la cadena '~A1~' es la menor');
+	}
+	si (C3<A1){
+		imprimir('las cadenas '~C3~' y '~B2~' son iguales');	
+		imprimir('la cadena '~A1~' es la mayor');	
+	}
+
+}
+
+si(A1==B2){
+	si(A1==C3){
+		imprimir('las 3 cadenas son iguales');
+	}
+}
+Fin

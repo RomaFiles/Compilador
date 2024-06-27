@@ -1,0 +1,46 @@
+init {
+	int valor1;
+	int valor2 = 0;
+	float valor3;
+	int valor4;
+	string cadena1 = "cadena1";
+	print "Hola mundo");
+	print("Bienvenidos al programa base");
+	read valor1;
+	read valor3;
+	valor4 = 10;
+	int resultado = 2+2+2+;
+	print(2+2);
+	if(valor4 >? 8 {
+		print("Es mayor");
+	} elseif(valor4 <? 8) {
+		print("Es menor");
+	} else {
+		print("No lo se");
+	}
+	int arreglo1 = [5];
+	int arreglo2 = [2][2];
+	print(arreglo1[0]);
+	print(valor3)
+	bool valorLogico = 1 AND 1;
+	bool valorLogico2;
+	valorLogico2 = 5 OR 2;
+	read imprimeSaludo()
+	if(2 =? 2) 
+		print("Son iguales");
+	}
+	while(valor1 <? 9 {
+		print("Hola");
+		if(valor1 >? valor2) {
+			print("Estoy en un if");
+		}
+	}
+	do {
+		print("Hola como estas");
+		read variable9;
+		read imprimeSaludo();
+	} while(5 >? variable1);
+} end;
+define void imprimeSaludo() {
+	print("Hola te saludo");
+}

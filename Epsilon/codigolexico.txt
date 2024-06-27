@@ -1,0 +1,14 @@
+Inicio 
+
+Num A;
+Num B;
+Num C;
+Num E;
+Num I;
+Num R;
+Num M;
+Num $;
+Num D;
+Num C1;
+Cad F = 'Hola';
+Fin

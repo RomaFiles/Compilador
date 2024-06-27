@@ -1,0 +1,379 @@
+options {
+    IGNORE_CASE = true;
+    static = false;
+}
+
+PARSER_BEGIN(analizador)
+
+import java.io.*;
+import java.util.*;
+
+public class analizador {
+    private static File codigoFuente;
+    private static Environment environment = new Environment();  // Entorno para manejo de ámbitos
+
+    public static void main(String[] args) {
+        codigoFuente = new File(args[0]);
+        environment.pushScope();  // Iniciar un ámbito global
+        try {
+            analizadorTokenManager lexicManager = new analizadorTokenManager(new SimpleCharStream(new FileReader(codigoFuente)));
+            analizador parser = new analizador(lexicManager);
+            try {
+                parser.Programa();
+                System.out.println("Análisis completado sin errores.");
+            } catch (ParseException ex) {
+                System.out.println("Error sintáctico: " + ex.getMessage());
+            }
+        } catch (FileNotFoundException ex) {
+            System.err.println("Archivo no encontrado: " + args[0]);
+        } catch (TokenMgrError ex) {
+            System.err.println("Error léxico: " + ex.getMessage());
+        } finally {
+            environment.popScope();  // Cerrar el ámbito global
+        }
+    }
+}
+
+class SymbolTable {
+    private HashMap<String, String> symbols = new HashMap<String, String>();
+
+    public void declareSymbol(String identifier, String type) {
+        symbols.put(identifier, type);
+    }
+
+    public String getSymbolType(String identifier) {
+        return symbols.get(identifier);
+    }
+
+    public boolean isDeclared(String identifier) {
+        return symbols.containsKey(identifier);
+    }
+}
+
+class Environment {
+    private LinkedList<SymbolTable> scopes = new LinkedList<SymbolTable>();
+
+    public void pushScope() {
+        scopes.push(new SymbolTable());
+    }
+
+    public void popScope() {
+        if (!scopes.isEmpty()) {
+            scopes.pop();
+        }
+    }
+
+    public void declareSymbol(String identifier, String type) {
+        if (!scopes.isEmpty()) {
+            scopes.peek().declareSymbol(identifier, type);
+        }
+    }
+
+    public String getSymbolType(String identifier) {
+        for (SymbolTable table : scopes) {
+            String type = table.getSymbolType(identifier);
+            if (type != null) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    public boolean isDeclared(String identifier) {
+        for (SymbolTable table : scopes) {
+            if (table.isDeclared(identifier)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isDeclaredLocally(String identifier) {
+        if (!scopes.isEmpty()) {
+            return scopes.peek().isDeclared(identifier);
+        }
+        return false;
+    }
+}
+
+
+PARSER_END(analizador)
+
+SKIP : {
+    " "
+    | "\t"
+    | "\n"
+    | "\r"
+}
+
+TOKEN_MGR_DECLS : {
+    public Token getNextTokenB() {
+        boolean bandera = false;
+        Token matchedToken = null;
+        int curPos = 0;
+        boolean eofReached = false;
+        int invalidTokenStartLine = -1;
+        int invalidTokenStartColumn = -1;
+
+        while (!eofReached) {
+            try {
+                curChar = input_stream.BeginToken();
+            } catch (java.io.IOException e) {
+                jjmatchedKind = 0;
+                jjmatchedPos = -1;
+                matchedToken = jjFillToken();
+                return matchedToken;
+            }
+
+            try {
+                input_stream.backup(0);
+                while (curChar <= 32 && (0x100002600L & (1L << curChar)) != 0L) {
+                    curChar = input_stream.BeginToken();
+                }
+            } catch (java.io.IOException e1) {
+                continue;
+            }
+            jjmatchedKind = 0x7fffffff;
+            jjmatchedPos = 0;
+            curPos = jjMoveStringLiteralDfa0_0();
+            
+            if (jjmatchedKind != 0x7fffffff) {
+                if (jjmatchedPos + 1 < curPos) {
+                    input_stream.backup(curPos - jjmatchedPos - 1);
+                }
+                
+                if ((jjtoToken[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
+                    matchedToken = jjFillToken();
+                    return matchedToken;
+                }
+                
+            } else {
+                if (invalidTokenStartLine == -1) {
+                    invalidTokenStartLine = input_stream.getEndLine();
+                    invalidTokenStartColumn = input_stream.getEndColumn();
+                    System.out.println("Error léxico encontrado en línea " + invalidTokenStartLine + ", columna " + invalidTokenStartColumn + " se encontró un: " + curChar);
+                    System.out.println("Para corregir el error elimina el carácter inválido");
+                }
+            }
+            try {
+                input_stream.readChar();
+                
+            } catch (java.io.IOException e1) {
+                eofReached = true;
+                
+            }
+            
+        }
+        matchedToken = jjFillToken();
+        matchedToken.kind = analizadorTokenManager.EOF;
+        return matchedToken;
+    }
+   
+}
+
+// Tokens ya definidos por ti
+TOKEN : {
+    < INIT: "init" >
+    | < END: "end" >
+    | < INTEGER: "int" >
+    | < FLOAT: "float" >
+    | < BOOLEANO: "bool" >
+    | < STRING: "string" >
+    | < PI: "pi" >
+    | < EULER: "euler" >
+    | < CONSTANT: "constant" >
+    | < AND: "and" >
+    | < OR: "or" >
+    | < NOT: "not" >
+    | < PRINT: "print" >
+    | < INPUT: "read" >
+    | < IF: "if" >
+    | < ELSE: "else" >
+    | < ELSE_IF: "elseif" >
+    | < WHILE: "while" >
+    | < DO: "do" >
+    | < DEFINE_FUNC: "define" >
+    | < GET_RETURN_FUNC: "get" >
+    | < TRUE: "true" >
+    | < FALSE: "false" >
+    | < VOID: "void" >
+    | < SUMA: "+" >
+    | < RESTA: "-" >
+    | < MULTI: "*" >
+    | < DIV: "/" >
+    | < IGUAL_QUE: "=?">
+    | < DIFERENTE_QUE: "!=?">
+    | < MAYOR_QUE: ">?">
+    | < MENOR_QUE: "<?">
+    | < MAYOR_IGUAL_QUE: ">=?">
+    | < MENOR_IGUAL_QUE: "<=?">
+    | < ASIGNA: "=" >
+    | < FIN_LINE: ";" >
+    | < LLAVE_IZQ: "{" >
+    | < LLAVE_DER: "}" >
+    | < PAREN_IZQ: "(" >
+    | < PAREN_DER: ")" >
+    | < CORCH_IZQ: "[" >
+    | < CORCH_DER: "]" >
+    | < DOBLE_PUNTO: ":" >
+    | < COMA: "," >
+    | < PUNTO: "." >
+    | < NOMBRE_VAR: (["a"-"z"] | ["A"-"Z"]) (["a"-"z"] | ["A"-"Z"] | ["0"-"9"])* >
+    | < NUMERO: (["0"-"9"])+ >
+    | < CADENA: "\"" (["a"-"z"] | ["A"-"Z"] | ["0"-"9"] | [" "] | [","] | ["."] | ["!"])+ "\"" >
+    | < CARACTER: "'" (["a"-"z"] | ["A"-"Z"] | ["0"-"9"] | [" "] | [","] | ["."] | ["!"]) "'" >
+}
+
+void Main() : {}
+{
+    try {
+        Programa()
+        <EOF>
+    } catch (ParseException e) {
+        System.out.println("Error de parseo: " + e.getMessage());
+    }
+}
+
+void Programa() : {}
+{
+    <INIT>
+    Bloque()
+    <END>
+}
+
+void Bloque() : {}
+{
+    <LLAVE_IZQ>
+    Sentencias()
+    <LLAVE_DER>
+}
+
+void Sentencias() : {}
+{
+    (
+        Impresion()
+        | If()
+        | Declaracion()
+        | Inicializacion()
+        | Lectura()
+        | While()
+        | DoWhile()
+        | Funcion()
+    )*
+}
+
+
+void Arreglo():
+{}
+{
+    try{<CORCH_IZQ>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró corchete izquierdo [ en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{<NUMERO>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró un número en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{<CORCH_DER>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró corchete derecho ] en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    (Arreglo())*
+}
+
+void Operacion():
+{}
+{
+    ((<SUMA>|<RESTA>|<MULTI>|<DIV>)
+    (<NUMERO>|<NOMBRE_VAR>))|((<AND>|<OR>|<NOT>)(<NUMERO>|<NOMBRE_VAR>))
+}
+
+void Lectura():
+{}
+{
+    <INPUT>
+    try{(<NOMBRE_VAR>(<PAREN_IZQ><PAREN_DER>)*)}catch(ParseException ex){System.out.println("Error sintáctico, no se detectó un nombre de variable para leer en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{<FIN_LINE>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró punto y coma ; en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+}
+
+void Impresion():
+{}
+{
+    <PRINT>
+    try{<PAREN_IZQ>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró paréntesis izquierdo ( en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{(<CADENA>|<NOMBRE_VAR>(Arreglo())*|(<NUMERO>(Operacion())*))}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró una cadena, operación o nombre de variable para imprimir en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{<PAREN_DER>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró paréntesis derecho ) en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+    try{<FIN_LINE>}catch(ParseException ex){System.out.println("Error sintáctico, no se encontró punto y coma ; en la línea "+token.beginLine+", columna "+token.beginColumn+" después de "+token.image);}
+}
+
+void Declaracion() : {}
+{
+    (
+        <INTEGER> | <FLOAT> | <BOOLEANO> | <STRING>
+    )
+    <NOMBRE_VAR>
+    {
+        String id = getToken(1).image;
+        String type = getToken(0).image;
+        if (environment.isDeclaredLocally(id)) {
+            System.out.println("Error semántico: Variable '" + id + "' ya declarada.");
+        } else {
+            environment.declareSymbol(id, type);
+            System.out.println("Declarada variable '" + id + "' de tipo '" + type + "'");
+        }
+    }
+    <FIN_LINE>
+}
+
+void Inicializacion() : {}
+{
+    <NOMBRE_VAR> <ASIGNA> (
+        <NUMERO>
+        | <CADENA>
+        | <NOMBRE_VAR>
+        | Expresion()
+    )
+    <FIN_LINE>
+}
+
+void Expresion() : {}
+{
+    Termino()
+    (
+        <SUMA> Termino()
+        | <RESTA> Termino()
+    )*
+}
+
+void Termino() : {}
+{
+    Factor()
+    (
+        <MULTI> Factor()
+        | <DIV> Factor()
+    )*
+}
+
+void Factor() : {}
+{
+    <NUMERO>
+    | <PAREN_IZQ> Expresion() <PAREN_DER>
+}
+
+void If() : {}
+{
+    <IF> <PAREN_IZQ> Expresion() <PAREN_DER> Bloque()
+    (
+        <ELSE_IF> <PAREN_IZQ> Expresion() <PAREN_DER> Bloque()
+    )*
+    (
+        <ELSE> Bloque()
+    )?
+}
+
+void While() : {}
+{
+    <WHILE> <PAREN_IZQ> Expresion() <PAREN_DER> Bloque()
+}
+
+void DoWhile() : {}
+{
+    <DO> Bloque() <WHILE> <PAREN_IZQ> Expresion() <PAREN_DER> <FIN_LINE>
+}
+
+void Funcion() : {}
+{
+    <DEFINE_FUNC> <VOID> <NOMBRE_VAR> <PAREN_IZQ> <PAREN_DER> Bloque()
+}
+

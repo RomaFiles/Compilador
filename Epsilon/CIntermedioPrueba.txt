@@ -1,0 +1,29 @@
+Inicio
+
+Num OFE = 100;
+Cad S;
+Cad S1;
+Num I = 1;
+
+Num B = 10;
+
+
+
+imprimir ('Ingrese una palabra');
+leer ( S );
+imprimir ('Ingrese una segunda palabra');
+leer ( S1 );
+
+si (S == S1)  {
+    imprimir ('Las dos palabras son iguales');
+}
+si (S != S1)  {
+    imprimir ('Las dos palabras son diferentes');
+}
+
+S = S ~ ' ' ~ S1;
+
+para (I <11 ; I +1){
+imprimir (I ~ ' La unión de las palabras es: ' ~ S );
+}
+Fin
