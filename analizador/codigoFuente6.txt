@@ -1,0 +1,14 @@
+init {
+    int a;                
+    float b;            
+    string c;             
+    a = 5;                
+    b = 3.14;            
+    c = "Hello";          
+    d = 10;              
+    int a;               
+    a = "world";          
+    print(a);             
+    print(e);             
+}
+end;

@@ -1,0 +1,5 @@
+int x;
+x = 5;
+int y = x + 10;
+int x; // Error semántico: Variable 'x' ya declarada en este ámbito.
+y = z; // Error semántico: Variable 'z' no declarada.
