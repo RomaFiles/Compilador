@@ -114,9 +114,9 @@ public interface analizadorConstants {
   String[] tokenImage = {
     "<EOF>",
     "\" \"",
-    "\"\\r\"",
     "\"\\t\"",
     "\"\\n\"",
+    "\"\\r\"",
     "\"init\"",
     "\"end\"",
     "\"int\"",

@@ -4,81 +4,53 @@ import java.io.*;
 import java.util.*;
 
 public class analizador implements analizadorConstants {
-
     private static File codigoFuente;
+    private static Environment environment = new Environment();  // Entorno para manejo de ámbitos
 
     public static void main(String[] args) {
         codigoFuente = new File(args[0]);
+        environment.pushScope();  // Iniciar un ámbito global
         try {
             analizadorTokenManager lexicManager = new analizadorTokenManager(new SimpleCharStream(new FileReader(codigoFuente)));
             analizador parser = new analizador(lexicManager);
-            Token token;
             try {
-                parser.Main();
-            } catch (Exception ex) {
-                System.out.println("Error sint\u00e1ctico completo");
+                parser.Programa();
+                System.out.println("An\u00e1lisis completado sin errores.");
+            } catch (ParseException ex) {
+                System.out.println("Error sint\u00e1ctico: " + ex.getMessage());
             }
-        } catch (TokenMgrError exa) {
-            System.err.println("Error de token");
-        } catch (FileNotFoundException exb) {
-            System.err.println("No se pudo encontrar el archivo de c\u00f3digo fuente.");
+        } catch (FileNotFoundException ex) {
+            System.err.println("Archivo no encontrado: " + args[0]);
+        } catch (TokenMgrError ex) {
+            System.err.println("Error l\u00e9xico: " + ex.getMessage());
+        } finally {
+            environment.popScope();  // Cerrar el ámbito global
         }
-        System.out.println("Fin de la revisi\u00f3n");
     }
 
   final public void Main() throws ParseException {
-    Programa();
-    jj_consume_token(0);
+    try {
+      Programa();
+      jj_consume_token(0);
+    } catch (ParseException e) {
+System.out.println("Error de parseo: " + e.getMessage());
+    }
   }
 
   final public void Programa() throws ParseException {
-    Inicio();
-    label_1:
-    while (true) {
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case DEFINE_FUNC:{
-        ;
-        break;
-        }
-      default:
-        jj_la1[0] = jj_gen;
-        break label_1;
-      }
-      Proceso();
-    }
+    jj_consume_token(INIT);
+    Bloque();
+    jj_consume_token(END);
   }
 
-  final public void Inicio() throws ParseException {
-    try {
-      jj_consume_token(INIT);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 init en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn);
-    }
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
+  final public void Bloque() throws ParseException {
+    jj_consume_token(LLAVE_IZQ);
     Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(END);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 end en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(FIN_LINE);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
+    jj_consume_token(LLAVE_DER);
   }
 
   final public void Sentencias() throws ParseException {
-    label_2:
+    label_1:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case INTEGER:
@@ -90,13 +62,13 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en
       case IF:
       case WHILE:
       case DO:
-      case NOMBRE_VAR:{
+      case DEFINE_FUNC:{
         ;
         break;
         }
       default:
-        jj_la1[1] = jj_gen;
-        break label_2;
+        jj_la1[0] = jj_gen;
+        break label_1;
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case PRINT:{
@@ -114,10 +86,6 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en
         Declaracion();
         break;
         }
-      case NOMBRE_VAR:{
-        Inicializacion();
-        break;
-        }
       case INPUT:{
         Lectura();
         break;
@@ -130,52 +98,103 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en
         DoWhile();
         break;
         }
+      case DEFINE_FUNC:{
+        Funcion();
+        break;
+        }
       default:
-        jj_la1[2] = jj_gen;
+        jj_la1[1] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
     }
   }
 
-  final public void Inicializacion() throws ParseException {
-    jj_consume_token(NOMBRE_VAR);
+  final public void Arreglo() throws ParseException {
     try {
-      jj_consume_token(ASIGNA);
+      jj_consume_token(CORCH_IZQ);
     } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 delimitador de asignaci\u00f3n =, en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 corchete izquierdo [ en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
     }
     try {
+      jj_consume_token(NUMERO);
+    } catch (ParseException ex) {
+System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 un n\u00famero en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+    }
+    try {
+      jj_consume_token(CORCH_DER);
+    } catch (ParseException ex) {
+System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 corchete derecho ] en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+    }
+    label_2:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case CORCH_IZQ:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[2] = jj_gen;
+        break label_2;
+      }
+      Arreglo();
+    }
+  }
+
+  final public void Operacion() throws ParseException {
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case NUMERO:{
+      jj_consume_token(NUMERO);
+      break;
+      }
+    case NOMBRE_VAR:{
+      jj_consume_token(NOMBRE_VAR);
+      break;
+      }
+    default:
+      jj_la1[3] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    label_3:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case SUMA:
+      case RESTA:
+      case MULTI:
+      case DIV:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[4] = jj_gen;
+        break label_3;
+      }
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case SUMA:{
+        jj_consume_token(SUMA);
+        break;
+        }
+      case RESTA:{
+        jj_consume_token(RESTA);
+        break;
+        }
+      case MULTI:{
+        jj_consume_token(MULTI);
+        break;
+        }
+      case DIV:{
+        jj_consume_token(DIV);
+        break;
+        }
+      default:
+        jj_la1[5] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case NUMERO:{
         jj_consume_token(NUMERO);
-        label_3:
-        while (true) {
-          switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-          case AND:
-          case OR:
-          case NOT:
-          case SUMA:
-          case RESTA:
-          case MULTI:
-          case DIV:{
-            ;
-            break;
-            }
-          default:
-            jj_la1[3] = jj_gen;
-            break label_3;
-          }
-          Operacion();
-        }
-        break;
-        }
-      case CADENA:{
-        jj_consume_token(CADENA);
-        break;
-        }
-      case CORCH_IZQ:{
-        Arreglo();
         break;
         }
       case NOMBRE_VAR:{
@@ -183,52 +202,10 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 delimitador de as
         break;
         }
       default:
-        jj_la1[4] = jj_gen;
+        jj_la1[6] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se termin\u00f3 la inicializaci\u00f3n en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(FIN_LINE);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-  }
-
-  final public void Proceso() throws ParseException {
-    jj_consume_token(DEFINE_FUNC);
-    try {
-      jj_consume_token(VOID);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 palabra reservada void, en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(NOMBRE_VAR);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se defini\u00f3 el nombre del procedimiento en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(PAREN_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis izquierdo ( en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(PAREN_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis derecho ) en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
     }
   }
 
@@ -244,7 +221,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
           break;
           }
         default:
-          jj_la1[5] = jj_gen;
+          jj_la1[7] = jj_gen;
           break label_4;
         }
         jj_consume_token(PAREN_IZQ);
@@ -283,7 +260,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis i
             break;
             }
           default:
-            jj_la1[6] = jj_gen;
+            jj_la1[8] = jj_gen;
             break label_5;
           }
           Arreglo();
@@ -295,18 +272,13 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis i
         label_6:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-          case AND:
-          case OR:
-          case NOT:
-          case SUMA:
-          case RESTA:
-          case MULTI:
-          case DIV:{
+          case NOMBRE_VAR:
+          case NUMERO:{
             ;
             break;
             }
           default:
-            jj_la1[7] = jj_gen;
+            jj_la1[9] = jj_gen;
             break label_6;
           }
           Operacion();
@@ -314,7 +286,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis i
         break;
         }
       default:
-        jj_la1[8] = jj_gen;
+        jj_la1[10] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -333,397 +305,138 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en
     }
   }
 
-  final public void Operacion() throws ParseException {
-    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-    case SUMA:
-    case RESTA:
-    case MULTI:
-    case DIV:{
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case SUMA:{
-        jj_consume_token(SUMA);
-        break;
-        }
-      case RESTA:{
-        jj_consume_token(RESTA);
-        break;
-        }
-      case MULTI:{
-        jj_consume_token(MULTI);
-        break;
-        }
-      case DIV:{
-        jj_consume_token(DIV);
-        break;
-        }
-      default:
-        jj_la1[9] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case NUMERO:{
-        jj_consume_token(NUMERO);
-        break;
-        }
-      case NOMBRE_VAR:{
-        jj_consume_token(NOMBRE_VAR);
-        break;
-        }
-      default:
-        jj_la1[10] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      break;
-      }
-    case AND:
-    case OR:
-    case NOT:{
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case AND:{
-        jj_consume_token(AND);
-        break;
-        }
-      case OR:{
-        jj_consume_token(OR);
-        break;
-        }
-      case NOT:{
-        jj_consume_token(NOT);
-        break;
-        }
-      default:
-        jj_la1[11] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case NUMERO:{
-        jj_consume_token(NUMERO);
-        break;
-        }
-      case NOMBRE_VAR:{
-        jj_consume_token(NOMBRE_VAR);
-        break;
-        }
-      default:
-        jj_la1[12] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
-      }
-      break;
-      }
-    default:
-      jj_la1[13] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
-    }
-  }
-
-  final public void While() throws ParseException {
-    jj_consume_token(WHILE);
-    try {
-      jj_consume_token(PAREN_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis izquierdo ( en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    ComparacionLogica();
-    try {
-      jj_consume_token(PAREN_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis derecho ) en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-  }
-
-  final public void DoWhile() throws ParseException {
-    jj_consume_token(DO);
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(WHILE);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 while en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(PAREN_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis izquierdo ( en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    ComparacionLogica();
-    try {
-      jj_consume_token(PAREN_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis derecho ) en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(FIN_LINE);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-  }
-
-  final public void Declaracion() throws ParseException {
+  final public void Declaracion() throws ParseException {Token tipo;
+    Token var;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case INTEGER:{
       jj_consume_token(INTEGER);
+tipo = token;
       break;
       }
     case FLOAT:{
       jj_consume_token(FLOAT);
+tipo = token;
       break;
       }
     case BOOLEANO:{
       jj_consume_token(BOOLEANO);
+tipo = token;
       break;
       }
     case STRING:{
       jj_consume_token(STRING);
+tipo = token;
       break;
       }
     default:
-      jj_la1[14] = jj_gen;
+      jj_la1[11] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
-    jj_consume_token(NOMBRE_VAR);
-    try {
-      label_7:
-      while (true) {
-        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-        case ASIGNA:{
-          ;
-          break;
-          }
-        default:
-          jj_la1[15] = jj_gen;
-          break label_7;
+    var = jj_consume_token(NOMBRE_VAR);
+String id = var.image;
+        String type = tipo.image;
+        if (environment.isDeclaredLocally(id)) {
+            System.out.println("Error sem\u00e1ntico: Variable '" + id + "' ya declarada.");
+        } else {
+            environment.declareSymbol(id, type);
+            System.out.println("Declarada variable '" + id + "' de tipo '" + type + "'");
         }
-        jj_consume_token(ASIGNA);
-        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-        case NUMERO:{
-          jj_consume_token(NUMERO);
-          label_8:
-          while (true) {
-            switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-            case AND:
-            case OR:
-            case NOT:
-            case SUMA:
-            case RESTA:
-            case MULTI:
-            case DIV:{
-              ;
-              break;
-              }
-            default:
-              jj_la1[16] = jj_gen;
-              break label_8;
-            }
-            Operacion();
-          }
-          break;
-          }
-        case CADENA:{
-          jj_consume_token(CADENA);
-          break;
-          }
-        case CORCH_IZQ:{
-          Arreglo();
-          break;
-          }
-        case NOMBRE_VAR:{
-          jj_consume_token(NOMBRE_VAR);
-          label_9:
-          while (true) {
-            switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-            case AND:
-            case OR:
-            case NOT:
-            case SUMA:
-            case RESTA:
-            case MULTI:
-            case DIV:{
-              ;
-              break;
-              }
-            default:
-              jj_la1[17] = jj_gen;
-              break label_9;
-            }
-            Operacion();
-          }
-          break;
-          }
-        default:
-          jj_la1[18] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-      }
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se termin\u00f3 la inicializaci\u00f3n en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(FIN_LINE);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 punto y coma ; en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
+    jj_consume_token(FIN_LINE);
   }
 
-  final public void Arreglo() throws ParseException {
-    try {
-      jj_consume_token(CORCH_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 corchete izquierdo [ en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(NUMERO);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 un n\u00famero en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(CORCH_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 corchete derecho ] en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    label_10:
+  final public void Expresion() throws ParseException {
+    Termino();
+    label_7:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case CORCH_IZQ:{
+      case SUMA:
+      case RESTA:{
         ;
         break;
         }
       default:
-        jj_la1[19] = jj_gen;
-        break label_10;
+        jj_la1[12] = jj_gen;
+        break label_7;
       }
-      Arreglo();
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case SUMA:{
+        jj_consume_token(SUMA);
+        Termino();
+        break;
+        }
+      case RESTA:{
+        jj_consume_token(RESTA);
+        Termino();
+        break;
+        }
+      default:
+        jj_la1[13] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
     }
   }
 
-  final public void ComparacionLogica() throws ParseException {
-    try {
+  final public void Termino() throws ParseException {
+    Factor();
+    label_8:
+    while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case NOMBRE_VAR:{
-        jj_consume_token(NOMBRE_VAR);
-        break;
-        }
-      case NUMERO:{
-        jj_consume_token(NUMERO);
+      case MULTI:
+      case DIV:{
+        ;
         break;
         }
       default:
-        jj_la1[20] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
+        jj_la1[14] = jj_gen;
+        break label_8;
       }
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 un operador para la comparaci\u00f3n l\u00f3gica en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Comparaciones();
-    try {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case NOMBRE_VAR:{
-        jj_consume_token(NOMBRE_VAR);
+      case MULTI:{
+        jj_consume_token(MULTI);
+        Factor();
         break;
         }
-      case NUMERO:{
-        jj_consume_token(NUMERO);
+      case DIV:{
+        jj_consume_token(DIV);
+        Factor();
         break;
         }
       default:
-        jj_la1[21] = jj_gen;
+        jj_la1[15] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 un operador para la comparaci\u00f3n l\u00f3gica en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
     }
   }
 
-  final public void Comparaciones() throws ParseException {
-    try {
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case IGUAL_QUE:{
-        jj_consume_token(IGUAL_QUE);
-        break;
-        }
-      case DIFERENTE_QUE:{
-        jj_consume_token(DIFERENTE_QUE);
-        break;
-        }
-      case MAYOR_QUE:{
-        jj_consume_token(MAYOR_QUE);
-        break;
-        }
-      case MENOR_QUE:{
-        jj_consume_token(MENOR_QUE);
-        break;
-        }
-      case MAYOR_IGUAL_QUE:{
-        jj_consume_token(MAYOR_IGUAL_QUE);
-        break;
-        }
-      case MENOR_IGUAL_QUE:{
-        jj_consume_token(MENOR_IGUAL_QUE);
-        break;
-        }
-      default:
-        jj_la1[22] = jj_gen;
-        jj_consume_token(-1);
-        throw new ParseException();
+  final public void Factor() throws ParseException {
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case NUMERO:{
+      jj_consume_token(NUMERO);
+      break;
       }
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 un token de comparaci\u00f3n l\u00f3gica en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+    case PAREN_IZQ:{
+      jj_consume_token(PAREN_IZQ);
+      Expresion();
+      jj_consume_token(PAREN_DER);
+      break;
+      }
+    default:
+      jj_la1[16] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
     }
   }
 
   final public void If() throws ParseException {
     jj_consume_token(IF);
-    try {
-      jj_consume_token(PAREN_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis izquierdo ( en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    ComparacionLogica();
-    try {
-      jj_consume_token(PAREN_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis derecho ) en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    label_11:
+    jj_consume_token(PAREN_IZQ);
+    Expresion();
+    jj_consume_token(PAREN_DER);
+    Bloque();
+    label_9:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case ELSE_IF:{
@@ -731,65 +444,52 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
         break;
         }
       default:
-        jj_la1[23] = jj_gen;
-        break label_11;
+        jj_la1[17] = jj_gen;
+        break label_9;
       }
-      Elseif();
-    }
-    label_12:
-    while (true) {
-      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case ELSE:{
-        ;
-        break;
-        }
-      default:
-        jj_la1[24] = jj_gen;
-        break label_12;
-      }
-      Else();
-    }
-  }
-
-  final public void Elseif() throws ParseException {
-    jj_consume_token(ELSE_IF);
-    try {
+      jj_consume_token(ELSE_IF);
       jj_consume_token(PAREN_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis izquierdo ( en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    ComparacionLogica();
-    try {
+      Expresion();
       jj_consume_token(PAREN_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 par\u00e9ntesis derecho ) en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+      Bloque();
     }
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case ELSE:{
+      jj_consume_token(ELSE);
+      Bloque();
+      break;
+      }
+    default:
+      jj_la1[18] = jj_gen;
+      ;
     }
   }
 
-  final public void Else() throws ParseException {
-    jj_consume_token(ELSE);
-    try {
-      jj_consume_token(LLAVE_IZQ);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave izquierda { en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
-    Sentencias();
-    try {
-      jj_consume_token(LLAVE_DER);
-    } catch (ParseException ex) {
-System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } en la l\u00ednea "+token.beginLine+", columna "+token.beginColumn+" despu\u00e9s de "+token.image);
-    }
+  final public void While() throws ParseException {
+    jj_consume_token(WHILE);
+    jj_consume_token(PAREN_IZQ);
+    Expresion();
+    jj_consume_token(PAREN_DER);
+    Bloque();
+  }
+
+  final public void DoWhile() throws ParseException {
+    jj_consume_token(DO);
+    Bloque();
+    jj_consume_token(WHILE);
+    jj_consume_token(PAREN_IZQ);
+    Expresion();
+    jj_consume_token(PAREN_DER);
+    jj_consume_token(FIN_LINE);
+  }
+
+  final public void Funcion() throws ParseException {
+    jj_consume_token(DEFINE_FUNC);
+    jj_consume_token(VOID);
+    jj_consume_token(NOMBRE_VAR);
+    jj_consume_token(PAREN_IZQ);
+    jj_consume_token(PAREN_DER);
+    Bloque();
   }
 
   /** Generated Token Manager. */
@@ -801,7 +501,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
   public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[25];
+  final private int[] jj_la1 = new int[19];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -809,10 +509,10 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
       jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x1000000,0xce0780,0xce0780,0xe001c000,0x0,0x0,0x0,0xe001c000,0x0,0xe0000000,0x0,0x1c000,0x0,0xe001c000,0x780,0x0,0xe001c000,0xe001c000,0x0,0x0,0x0,0x0,0x0,0x200000,0x100000,};
+      jj_la1_0 = new int[] {0x1ce0780,0x1ce0780,0x0,0x0,0xe0000000,0xe0000000,0x0,0x0,0x0,0x0,0x0,0x780,0x60000000,0x60000000,0x80000000,0x80000000,0x0,0x200000,0x100000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x0,0x40000,0x40000,0x1,0x1c2000,0x800,0x2000,0x1,0x1c0000,0x1,0xc0000,0x0,0xc0000,0x1,0x0,0x80,0x1,0x1,0x1c2000,0x2000,0xc0000,0xc0000,0x7e,0x0,0x0,};
+      jj_la1_1 = new int[] {0x0,0x0,0x2000,0xc0000,0x1,0x1,0xc0000,0x800,0x2000,0xc0000,0x1c0000,0x0,0x0,0x0,0x1,0x1,0x80800,0x0,0x0,};
    }
 
   /** Constructor with InputStream. */
@@ -826,7 +526,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -840,7 +540,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -850,7 +550,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -860,7 +560,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -869,7 +569,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -878,7 +578,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 25; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
   }
 
   private Token jj_consume_token(int kind) throws ParseException {
@@ -934,7 +634,7 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 19; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -968,4 +668,66 @@ System.out.println("Error sint\u00e1ctico, no se encontr\u00f3 llave derecha } e
   final public void disable_tracing() {
   }
 
+}
+
+class SymbolTable {
+    private HashMap<String, String> symbols = new HashMap<String, String>();
+
+    public void declareSymbol(String identifier, String type) {
+        symbols.put(identifier, type);
+    }
+
+    public String getSymbolType(String identifier) {
+        return symbols.get(identifier);
+    }
+
+    public boolean isDeclared(String identifier) {
+        return symbols.containsKey(identifier);
+    }
+}
+
+class Environment {
+    private LinkedList<SymbolTable> scopes = new LinkedList<SymbolTable>();
+
+    public void pushScope() {
+        scopes.push(new SymbolTable());
+    }
+
+    public void popScope() {
+        if (!scopes.isEmpty()) {
+            scopes.pop();
+        }
+    }
+
+    public void declareSymbol(String identifier, String type) {
+        if (!scopes.isEmpty()) {
+            scopes.peek().declareSymbol(identifier, type);
+        }
+    }
+
+    public String getSymbolType(String identifier) {
+        for (SymbolTable table : scopes) {
+            String type = table.getSymbolType(identifier);
+            if (type != null) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    public boolean isDeclared(String identifier) {
+        for (SymbolTable table : scopes) {
+            if (table.isDeclared(identifier)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isDeclaredLocally(String identifier) {
+        if (!scopes.isEmpty()) {
+            return scopes.peek().isDeclared(identifier);
+        }
+        return false;
+    }
 }
